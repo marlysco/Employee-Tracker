@@ -94,7 +94,7 @@ const add=()=> {
             name: 'add',
             type: 'list',
             message: 'What do you want to add to the dashboard',
-            choices: ["Deparments", "Roles",  "Employees"]
+            choices: ["Departments", "Roles",  "Employees"]
         },
         ]).then((answer)=>{
             switch(answer.add) {
@@ -105,7 +105,8 @@ const add=()=> {
                  addRoles();
                 break;
                 case "Departments":
-                 addDepartment();
+                  addDepartment();
+                 break;
             }
         })
  }
@@ -151,8 +152,9 @@ const add=()=> {
  }
 
 
-
  //Second case subfunctions
+
+ //Add Employee
  const addEmployee = () =>{
     connection.query('SELECT title FROM roles', (err,res)=>{
         if(err) throw err;
@@ -188,24 +190,164 @@ const add=()=> {
       //Query to get the role id from the selected role
       connection.query('SELECT r.id FROM roles r JOIN employees e ON r.id = e.role_id AND title=?;', answer.role, (err, res)=> {
         if(err) throw err;
-        const resId=res;
-        console.log(resId); 
+        res.forEach(({id})=>{
+            resId=(`${id}`)
+        })
      //Query to get the manager id from the selected role
-      connection.query('SELECT manager_id FROM employees WHERE role_id=?;', resId, (err, res)=>{
+      connection.query('SELECT manager_id FROM employees WHERE role_id=?;', (resId), (err, res)=>{
         if(err) throw err;
-         const managerId=res;
-         console.log(managerId);
+        res.forEach(({manager_id})=>{
+            managerId=(`${manager_id}`)
+        })
+
     //Query to insert all the values in the new employee record
-      connection.query('INSERT INTO employees (id, first_name, last_name, role_id, manager_id) VALUES ?;',
+      connection.query('INSERT INTO employees SET ?;', 
       {
-       role_id:resId,
-       id:answer.id,
-       first_name: answer.firstName,
-       last_name: answer.secondName,
-       manager_id:managerId,
+        id:answer.id,
+        first_name: answer.firstName,
+        last_name: answer.secondName,
+        role_id:resId,
+        manager_id:managerId,
+       }
+       , (err)=>{
+       if(err) throw err;
+       console.log(`New employee: ${answer.firstName} ${answer.secondName}, added!`)
+        })
       })
-    })
+     })
    }) 
+  })
+}
+
+//Add role
+const addRoles=()=>{
+    connection.query('SELECT name FROM departments', (err,res)=>{
+        if(err) throw err;
+    inquirer.prompt([        
+        {
+           name: 'title',
+           type: 'input',
+           message: 'Please enter the role you want to add',
+        },
+        {
+           name: 'id',
+           type: 'input',
+           message: 'Please enter the role id',
+        },  
+        {
+            name: 'salary',
+            type: 'input',
+            message: 'Please enter the role salary',
+            validate(value) {
+                if (isNaN(value) === false) {
+                  return true;
+                }
+                return false;
+              },
+         },
+         {
+            name: 'department',
+            type: 'rawlist',
+            message: 'Please select the department for this new role',
+            choices() {
+             const departments = [];
+             res.forEach(({name}) => {
+               departments.push(`${name}`);
+             });
+             return departments;
+           },
+         },
+
+    ]).then((answer)=>{  
+    //Query to get the dapartment id from the selected department name
+    connection.query('SELECT d.id FROM departments d JOIN roles r ON d.id = r.department_id WHERE d.name=? LIMIT 1;', (answer.department), (err,res)=>{
+        if(err) throw err;
+        res.forEach(({id})=>{
+            departmentId=(`${id}`)
+        })
+    connection.query('INSERT INTO roles SET ?;',
+    {
+     id:answer.id,
+     title:answer.title,
+     salary:answer.salary,
+     department_id:departmentId
+    },
+    (err)=>{
+        if(err) throw err;
+        console.log(`The new role: ${answer.title}, has been added!`)
+    })
+    })
+  })
  })
-})
- }
+}
+
+//Add department
+const addDepartment =()=> {
+    console.log("test")
+    inquirer.prompt([        
+        {
+           name: 'name',
+           type: 'input',
+           message: "Please enter the department's name: ",
+        },
+        {
+           name: 'id',
+           type: 'input',
+           message: "Please enter the department's id: ",
+           validate(value) {
+            if (isNaN(value) === false) {
+              return true;
+            }
+            return false;
+          },
+        },  
+       ]).then((answer)=>{
+           connection.query('INSERT INTO departments SET ?',
+           {
+               id:answer.id,
+               name:answer.name
+           },
+           (err)=>{
+               if(err) throw err;
+               console.log(`The new department: ${answer.id} has been added!`)
+           });
+       })
+    }
+
+//Third case functions
+//Update role
+const updateRoles=()=>{
+    connection.query('SELECT e.first_name, e.last_name, r.title  FROM employees e JOIN roles r', (err, res)=>{
+        if (err) throw err;
+        inquirer.prompt([
+            {
+                name: "name",
+                type: "rawlist",
+                message: "Please select the employee to whom role will be updated",
+                choices(){
+                    res.forEach(({first_name, last_name})=>{
+                    nameConstructor= `${first_name}`+ `${last_name}`
+                    employeeList=[];
+                    employeeList.push(nameConstructor);
+                });
+                return nameConstructor;
+               }
+            }, 
+            {
+                name: "update_role",
+                type: "rawlist",
+                message: "Which role do you want to set for this employee?: ",
+                choices(){
+                    res.forEach(({title})=>{
+                    roleList=[];
+                    roleList.push(`${title}`);
+                });
+                return roleList;
+               }
+            },     
+        ]).then((answer)=>{
+            connection.query('INSERT INTO ')
+        }
+       
+     })
+}
