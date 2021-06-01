@@ -2,7 +2,6 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
 
-
 //Setting with the sql database
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -307,12 +306,6 @@ const addDepartment =()=> {
 const updateRoles=()=>{
     connection.query('SELECT e.id, e.first_name, e.last_name, r.title FROM employees e JOIN roles r ON e.role_id = r.id', (err, res)=>{
         if (err) throw err;
-        employeeId=[];
-        res.forEach(({id})=>{
-        employeeId.push(`${id}`)
-        console.log(employeeId);
-        return employeeId;
-        });
         inquirer.prompt([
             {
                 name: "name",
@@ -320,8 +313,8 @@ const updateRoles=()=>{
                 message: "Please select the employee to whom the role will be updated",
                 choices(){
                     employeeList=[];
-                    res.forEach(({first_name, last_name, id})=>{
-                    nameConstructor= `${first_name} ${last_name}`
+                    res.forEach(({first_name, last_name,id})=>{
+                    nameConstructor= `ID:${id}---${first_name} ${last_name}`
                     employeeList.push(nameConstructor);
                 });
                 return employeeList;
@@ -335,24 +328,26 @@ const updateRoles=()=>{
                    roleList=[];
                     res.forEach(({title})=>{
                     roleList.push(`${title}`);
-                });
-                return roleList;
-               }
-            },     
+                   });
+                 return roleList;
+                  }
+            },  
         ]).then((answer)=>{
             connection.query('SELECT id FROM roles WHERE title=?', answer.updateRole, (err,res)=>{
               if (err) throw err;
               updatedRoleId=[];
               res.forEach(({id})=>{
               updatedRoleId.push(`${id}`);
-              //Query to update the employee role_id using his id
-              connection.query(`UPDATE employees SET role_id=${updatedRoleId} WHERE id=${employeeId}`, (err)=>{
+              })
+              employeeArray=answer.name;
+              employeeID=employeeArray.substring(3,6);
+                //Query to update the employee role_id using his id
+              connection.query(`UPDATE employees SET role_id=${updatedRoleId} WHERE id=${employeeID}`, (err)=>{
                 if(err) throw err;
-                console.log(`Role updated to ${answer.update_role} for ${nameConstructor[0]} ${nameConstructor[1]}`)
-               })
-             })
-            })
-          })
-        });
-        allOptions();
-      }
+              console.log(`${answer.updateRole} is now the role for the employee ID:${employeeID}!`)
+             });
+            });
+          }); 
+       });
+      };
+      
