@@ -25,7 +25,7 @@ const allOptions = () => {
         name: 'view',
         type: 'list',
         message: 'What do you want to perform?',
-        choices: ["View deparments, roles or employees", "Add deparments, roles or employees", "Update employee roles", "Update employee managers", "View employees by manager", "Delete departments, roles, or employees", "View the total utilized budget of a department"]
+        choices: ["View deparments, roles or employees", "Add deparments, roles or employees", "Update employee roles"]    
     },
     ]).then((answer)=>{
         switch(answer.view) {
@@ -37,29 +37,12 @@ const allOptions = () => {
               break;
             case "Update employee roles":
               updateRoles();
-              break;
-            case "Update employee managers":
-              updateManager();
-              break;
-            case "View employees by manager":
-              employeeByManager();
-              break;
-            case "Delete departments, roles, or employees":
-              del();
-              break;
-            case "View the total utilized budget of a department":
-              budget();
               break;  
-      }   
-        
-        }
-
-    )
-   
+          }   
+    })  
 }
 
 allOptions();
-
 
 // First case: Show
 const view =()=> {
@@ -69,7 +52,7 @@ const view =()=> {
             name: 'show',
             type: 'list',
             message: 'Please select what information you want to display: ',
-            choices: ["Departments", "Roles", "Employees"]
+            choices: ["Departments", "Roles", "Employees", "Back to main menu"]
         },   
     ]).then((answer)=>{
         switch(answer.show) {
@@ -82,10 +65,12 @@ const view =()=> {
             case "Employees":
                 showEmployees();
             break;
+            case "Back to main menu":
+                allOptions();
+            break;
         }
     })
 }
-
 
 //Second case: Add
 const add=()=> {
@@ -124,7 +109,8 @@ const add=()=> {
         console.log(`${id} | ${name}`);
         console.log("......................")
       });
-             })
+             });
+   allOptions();
  };
 
  const showRoles=()=>{
@@ -136,7 +122,8 @@ const add=()=> {
     res.forEach(({ id, title, salary, department_id}) => {
         console.log(`${id} | ${title}  |  $${salary}.00 |    ${department_id}`); 
       });
-     })
+     });
+  allOptions();
  }
 
  const showEmployees=()=>{
@@ -148,12 +135,11 @@ const add=()=> {
     res.forEach(({ id, first_name, last_name, role_id, manager_id}) => {
         console.log(`${id} | ${first_name} ${last_name} |  ${role_id}  | ${manager_id}`); 
       });
-     })
+     });
+  allOptions();
  }
 
-
  //Second case subfunctions
-
  //Add Employee
  const addEmployee = () =>{
     connection.query('SELECT title FROM roles', (err,res)=>{
@@ -199,7 +185,6 @@ const add=()=> {
         res.forEach(({manager_id})=>{
             managerId=(`${manager_id}`)
         })
-
     //Query to insert all the values in the new employee record
       connection.query('INSERT INTO employees SET ?;', 
       {
@@ -217,6 +202,7 @@ const add=()=> {
      })
    }) 
   })
+  allOptions();
 }
 
 //Add role
@@ -279,6 +265,7 @@ const addRoles=()=>{
     })
   })
  })
+ allOptions();
 }
 
 //Add department
@@ -312,42 +299,60 @@ const addDepartment =()=> {
                console.log(`The new department: ${answer.id} has been added!`)
            });
        })
+       allOptions();
     }
 
 //Third case functions
 //Update role
 const updateRoles=()=>{
-    connection.query('SELECT e.first_name, e.last_name, r.title  FROM employees e JOIN roles r', (err, res)=>{
+    connection.query('SELECT e.id, e.first_name, e.last_name, r.title FROM employees e JOIN roles r ON e.role_id = r.id', (err, res)=>{
         if (err) throw err;
+        employeeId=[];
+        res.forEach(({id})=>{
+        employeeId.push(`${id}`)
+        console.log(employeeId);
+        return employeeId;
+        });
         inquirer.prompt([
             {
                 name: "name",
                 type: "rawlist",
-                message: "Please select the employee to whom role will be updated",
+                message: "Please select the employee to whom the role will be updated",
                 choices(){
-                    res.forEach(({first_name, last_name})=>{
-                    nameConstructor= `${first_name}`+ `${last_name}`
                     employeeList=[];
+                    res.forEach(({first_name, last_name, id})=>{
+                    nameConstructor= `${first_name} ${last_name}`
                     employeeList.push(nameConstructor);
                 });
-                return nameConstructor;
+                return employeeList;
                }
             }, 
             {
-                name: "update_role",
+                name: "updateRole",
                 type: "rawlist",
                 message: "Which role do you want to set for this employee?: ",
                 choices(){
+                   roleList=[];
                     res.forEach(({title})=>{
-                    roleList=[];
                     roleList.push(`${title}`);
                 });
                 return roleList;
                }
             },     
         ]).then((answer)=>{
-            connection.query('INSERT INTO ')
-        }
-       
-     })
-}
+            connection.query('SELECT id FROM roles WHERE title=?', answer.updateRole, (err,res)=>{
+              if (err) throw err;
+              updatedRoleId=[];
+              res.forEach(({id})=>{
+              updatedRoleId.push(`${id}`);
+              //Query to update the employee role_id using his id
+              connection.query(`UPDATE employees SET role_id=${updatedRoleId} WHERE id=${employeeId}`, (err)=>{
+                if(err) throw err;
+                console.log(`Role updated to ${answer.update_role} for ${nameConstructor[0]} ${nameConstructor[1]}`)
+               })
+             })
+            })
+          })
+        });
+        allOptions();
+      }
