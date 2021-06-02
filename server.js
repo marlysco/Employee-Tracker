@@ -103,42 +103,49 @@ const add=()=> {
     (err, res) => {
     if (err) throw err;
     console.log ("ID  | Name")
-    console.log("-------------------------")
+    console.log("-----------------------------")
+    console.log("----D E P A R T M E N T S----")
+    console.log("-----------------------------")
     res.forEach(({ id, name}) => {
         console.log(`${id} | ${name}`);
         console.log("......................")
       });
-             });
-   allOptions();
+      allOptions(); 
+    }); 
  };
 
  const showRoles=()=>{
     connection.query( 'SELECT * FROM roles ORDER BY id DESC',
     (err, res) => {
     if (err) throw err;
-    console.log ("ID  |     Title     |     Salary    |   Department ID")
-    console.log("----------------------------------------------------------")
+    console.log("--------------------------------------------------------------------------------------")
+    console.log("--------------------------------------R O L E S---------------------------------------")
+    console.log("--------------------------------------------------------------------------------------")
     res.forEach(({ id, title, salary, department_id}) => {
-        console.log(`${id} | ${title}  |  $${salary}.00 |    ${department_id}`); 
+        console.log(`ID: ${id}| Title: ${title} | Salary: $${salary}.00 | Department ID: ${department_id}`);
+        console.log("-------------------------------------------------------------------------------------") 
       });
+      allOptions();
      });
-  allOptions();
  }
 
  const showEmployees=()=>{
     connection.query( 'SELECT * FROM employees ORDER BY id DESC',
     (err, res) => {
     if (err) throw err;
-    console.log ("ID  |       Name       |   Role ID    |  Manager ID ")
+    console.log("---------------------------------------------------------------------------")
+    console.log("----------------------------E M P L O Y E E S------------------------------")
     console.log("---------------------------------------------------------------------------")
     res.forEach(({ id, first_name, last_name, role_id, manager_id}) => {
-        console.log(`${id} | ${first_name} ${last_name} |  ${role_id}  | ${manager_id}`); 
+        console.log(`ID: ${id} | Name: ${first_name} ${last_name} | Role ID: ${role_id} | Manager ID: ${manager_id}`); 
+        console.log("--------------------------------------------------------------------------")
       });
+      allOptions();
      });
-  allOptions();
  }
 
  //Second case subfunctions
+
  //Add Employee
  const addEmployee = () =>{
     connection.query('SELECT title FROM roles', (err,res)=>{
@@ -198,11 +205,11 @@ const add=()=> {
        console.log(`New employee: ${answer.firstName} ${answer.secondName}, added!`)
         })
       })
+      allOptions();
      })
-   }) 
+    }) 
   })
-  allOptions();
-}
+};
 
 //Add role
 const addRoles=()=>{
@@ -245,7 +252,7 @@ const addRoles=()=>{
 
     ]).then((answer)=>{  
     //Query to get the dapartment id from the selected department name
-    connection.query('SELECT d.id FROM departments d JOIN roles r ON d.id = r.department_id WHERE d.name=? LIMIT 1;', (answer.department), (err,res)=>{
+    connection.query('SELECT d.id FROM departments d WHERE d.name=? LIMIT 1;', (answer.department), (err,res)=>{
         if(err) throw err;
         res.forEach(({id})=>{
             departmentId=(`${id}`)
@@ -255,17 +262,17 @@ const addRoles=()=>{
      id:answer.id,
      title:answer.title,
      salary:answer.salary,
-     department_id:departmentId
+     department_id:departmentId,
     },
     (err)=>{
         if(err) throw err;
         console.log(`The new role: ${answer.title}, has been added!`)
-    })
-    })
+      })
+      allOptions();
+     }) 
+   })
   })
- })
- allOptions();
-}
+};
 
 //Add department
 const addDepartment =()=> {
@@ -295,16 +302,16 @@ const addDepartment =()=> {
            },
            (err)=>{
                if(err) throw err;
-               console.log(`The new department: ${answer.id} has been added!`)
-           });
+               console.log(`The new department: ${answer.id} has been added!`);
+               allOptions();
+           }); 
        })
-       allOptions();
-    }
+    };
 
 //Third case functions
 //Update role
 const updateRoles=()=>{
-    connection.query('SELECT e.id, e.first_name, e.last_name, r.title FROM employees e JOIN roles r ON e.role_id = r.id', (err, res)=>{
+    connection.query('SELECT DISTINCT e.id, e.first_name, e.last_name, r.title FROM employees e JOIN roles r ON e.role_id = r.id', (err, res)=>{
         if (err) throw err;
         inquirer.prompt([
             {
@@ -345,9 +352,11 @@ const updateRoles=()=>{
               connection.query(`UPDATE employees SET role_id=${updatedRoleId} WHERE id=${employeeID}`, (err)=>{
                 if(err) throw err;
               console.log(`${answer.updateRole} is now the role for the employee ID:${employeeID}!`)
-             });
+              allOptions();
+            });
+              
             });
           }); 
-       });
+        });
       };
-      
+    
